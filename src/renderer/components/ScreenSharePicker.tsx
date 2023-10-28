@@ -50,6 +50,7 @@ interface StreamSettings {
     contentHint?: string;
     includeSources?: AudioSources;
     excludeSources?: AudioSources;
+    audioDevice?: string;
 }
 
 export interface StreamPick extends StreamSettings {
@@ -139,6 +140,8 @@ export function openScreenSharePicker(screens: Source[], skipPicker: boolean) {
                                 await VesktopNative.virtmic.start(v.includeSources);
                             }
                         }
+
+                        patchAudioWithDevice(v.audioDevice);
 
                         resolve(v);
                     }}
@@ -428,6 +431,11 @@ function StreamSettings({
                                 </p>
                             </div>
                         </div>
+                        <AudioSourceAnyDevice
+                            audioDevice={settings.audioDevice}
+                            setAudioDevice={source => setSettings(s => ({ ...s, audioDevice: source }))}
+                        />
+
                         {isWindows && (
                             <Switch
                                 value={settings.audio}
@@ -568,6 +576,38 @@ function updateItems(setSources: (s: AudioSources) => void, sources?: AudioSourc
 
         setSources([...(sources || []), value]);
     };
+}
+
+function AudioSourceAnyDevice({
+    audioDevice,
+    setAudioDevice
+}: {
+    audioDevice?: string;
+    setAudioDevice(s: string): void;
+}) {
+    const [sources, _, loading] = useAwaiter(
+        () =>
+            navigator.mediaDevices
+                .enumerateDevices()
+                .then(devices => devices.filter(device => device.kind === "audioinput")),
+        { fallbackValue: [] }
+    );
+
+    return (
+        <section>
+            <Forms.FormTitle>Audio</Forms.FormTitle>
+            {loading && <Forms.FormTitle>Loading audio devices...</Forms.FormTitle>}
+
+            {sources.length > 0 && (
+                <Select
+                    options={sources.map((s, idx) => ({ label: s.label, value: s.deviceId, default: idx === 0 }))}
+                    isSelected={s => s === audioDevice}
+                    select={setAudioDevice}
+                    serialize={String}
+                />
+            )}
+        </section>
+    );
 }
 
 function AudioSourcePickerLinux({
