@@ -140,12 +140,6 @@ export function openScreenSharePicker(screens: Source[], skipPicker: boolean) {
                         didSubmit = true;
 
                         if (v.includeSources && v.includeSources !== "None") {
-                            patchDisplayMedia({
-                                audioId: v.audioDevice,
-                                venmic: !!v.audioSource && v.audioSource !== "None",
-                                videoId: v.cameraId
-                            });
-
                             if (!v.audioDevice && v.audioSource && v.audioSource !== "None") {
                                 if (v.includeSources === "Entire System") {
                                     await VesktopNative.virtmic.startSystem(
@@ -156,7 +150,11 @@ export function openScreenSharePicker(screens: Source[], skipPicker: boolean) {
                                 }
                             }
 
-                            patchAudioWithDevice(v.audioDevice);
+                            patchDisplayMedia({
+                                audioId: v.audioDevice,
+                                venmic: !!v.audioSource && v.audioSource !== "None",
+                                videoId: v.cameraId
+                            });
 
                             resolve(v);
                         }
@@ -658,7 +656,6 @@ function AudioSourceAnyDevice({
     return (
         <section>
             <Forms.FormTitle>Audio</Forms.FormTitle>
-            {loading && <Forms.FormTitle>Loading audio devices...</Forms.FormTitle>}
 
             {sources.length > 0 && (
                 <Select
